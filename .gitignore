@@ -1,0 +1,23 @@
+# Environments
+rera-env/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Large files and temp directories
+projects.zip
+downloads/
+jsons/
+temp/
+tmp/
+
+# IDE
+.vscode/
+.idea/

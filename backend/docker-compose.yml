@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # 1. AI Engine (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: suretics_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Agar server par GPU hai, to neeche ki 5 lines uncomment kar dena
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # 2. Flask Backend
+  backend:
+    build: .
+    container_name: suretics_backend
+    command: python backend/server.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app  # Live sync ke liye
+    depends_on:
+      - ollama
+
+  # 3. Streamlit Dashboard
+  dashboard:
+    build: .
+    container_name: suretics_dashboard
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - backend
+
+volumes:
+  ollama_data:

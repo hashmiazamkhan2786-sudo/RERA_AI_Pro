@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SureAcre | Project Analyzer</title>
+    <style>
+        :root {
+            --primary-blue: #0F172A;
+            --accent-blue: #3B82F6;
+            --success-green: #10B981;
+            --bg-light: #F8FAFC;
+            --white: #FFFFFF;
+            --font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-light);
+            color: #1E293B;
+            line-height: 1.5;
+        }
+
+        /* --- NAVBAR --- */
+        .navbar {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--success-green);
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: linear-gradient(to bottom, #fff, #F8FAFC);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            color: #64748B;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* --- SEARCH BOX --- */
+        .search-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            border: 1px solid #E2E8F0;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .search-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0 2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: auto;
+            height: 46px;
+        }
+
+        .search-btn:hover {
+            background-color: #1e293b;
+            transform: translateY(-2px);
+        }
+
+        /* --- RESULTS LIST --- */
+        #results-area {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .result-card {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            border: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .result-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .info h3 {
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+            margin-bottom: 4px;
+        }
+
+        .info p {
+            font-size: 0.9rem;
+            color: #64748B;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .btn-view {
+            background: #EFF6FF;
+            color: var(--accent-blue);
+        }
+
+        .btn-view:hover {
+            background: #DBEAFE;
+        }
+
+        .btn-analyze {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .no-results {
+            text-align: center;
+            color: #94A3B8;
+            margin-top: 2rem;
+        }
+
+        .count-badge {
+            font-size: 0.9rem;
+            color: #64748B;
+            margin-bottom: 1rem;
+        }
+
+        /* --- LOADING OVERLAY (Premium UI) --- */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--success-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #loading-overlay h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        #loading-overlay p {
+            color: #94A3B8;
+            font-size: 1.1rem;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2>AI is Auditing Documents...</h2>
+        <p id="loading-text">Extracting clauses, running legal checks, and identifying hidden risks. This usually takes
+            10-30 seconds.</p>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">Sure<span>Acre</span></div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Internal Pipeline Tool</div>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <h1>RERA Project Pipeline</h1>
+        <p>Search projects and trigger the AI analysis engine.</p>
+
+        <div class="search-container">
+            <div class="input-group">
+                <label>District</label>
+                <input type="text" id="districtInput" placeholder="Filter by district...">
+            </div>
+            <div class="input-group">
+                <label>Project Name</label>
+                <input type="text" id="nameInput" placeholder="Enter keywords...">
+            </div>
+            <button onclick="searchData()" class="search-btn">Search</button>
+        </div>
+    </div>
+
+    <div id="results-area"></div>
+
+    <script src="projects.js"></script>
+
+    <script>
+        function clean(text) {
+            if (!text) return "";
+            return text.replace(/\\u[\dA-F]{4}/gi, "").replace(/-/g, ", ").trim();
+        }
+
+        // Smart Pipeline Trigger
+        function runPipeline(url) {
+            // Show premium loading screen
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            // Call the python server
+            fetch(`http://localhost:5000/run_pipeline?url=${encodeURIComponent(url)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error("Pipeline crashed or timed out.");
+                    return response.json();
+                })
+                .then(data => {
+                    // Redirect ONLY when Python says it's 100% done!
+                    document.getElementById('loading-text').innerText = "Analysis Complete! Opening Dashboard...";
+                    setTimeout(() => {
+                        window.location.href = "http://localhost:8501"; // FIX: Redirects directly to your Streamlit dashboard
+                    }, 1000);
+                })
+                .catch(err => {
+                    alert("❌ Error: Pipeline server is not running or failed to analyze.");
+                    document.getElementById('loading-overlay').style.display = 'none';
+                });
+        }
+
+        function searchData() {
+            const distVal = document.getElementById('districtInput').value.toLowerCase();
+            const nameVal = document.getElementById('nameInput').value.toLowerCase();
+            const resultBox = document.getElementById('results-area');
+
+            resultBox.innerHTML = "";
+
+            if (distVal === "" && nameVal === "") {
+                resultBox.innerHTML = "<div class='no-results'>Please enter a search term.</div>";
+                return;
+            }
+
+            const matches = projects.filter(p => {
+                const pName = p.project_name ? p.project_name.toLowerCase() : "";
+                const pDist = p.district ? p.district.toLowerCase() : "";
+                return (distVal === "" || pDist.includes(distVal)) &&
+                    (nameVal === "" || pName.includes(nameVal));
+            });
+
+            if (matches.length > 0) {
+                resultBox.innerHTML = `<div class='count-badge'>Showing ${Math.min(matches.length, 30)} of ${matches.length} matches</div>`;
+            } else {
+                resultBox.innerHTML = "<div class='no-results'>No matches found.</div>";
+                return;
+            }
+
+            matches.slice(0, 30).forEach(item => {
+                const safeDistrict = clean(item.district);
+
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+                    <div class="info">
+                        <h3>${item.project_name}</h3>
+                        <p>📍 ${safeDistrict}</p>
+                    </div>
+                    <div class="actions">
+                        <a href="${item.url}" target="_blank" class="btn btn-view">View RERA</a>
+                        <button onclick="runPipeline('${item.url}')" class="btn btn-analyze">Analyze AI →</button>
+                    </div>
+                `;
+                resultBox.appendChild(card);
+            });
+        }
+
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') searchData();
+        });
+    </script>
+</body>
+
+</html>

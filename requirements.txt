@@ -1,0 +1,7 @@
+playwright
+pypdf
+pdfplumber
+pdf2image
+pytesseract
+requests
+pymongo
