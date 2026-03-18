@@ -14,7 +14,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 # Enable CORS so your React frontend can talk to this Flask backend
-#CORS(app) 
+CORS(app) 
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 PIPELINE = PROJECT_ROOT / "pipeline.py"
