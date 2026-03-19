@@ -5,7 +5,8 @@ import subprocess
 from pathlib import Path
 import requests
 import urllib3
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
+import time
 from flask_cors import CORS
 from bs4 import BeautifulSoup
 
@@ -14,7 +15,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 # Enable CORS so your React frontend can talk to this Flask backend
-CORS(app) 
+CORS(app)
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 PIPELINE = PROJECT_ROOT / "pipeline.py"
@@ -90,13 +91,30 @@ def run_pipeline():
 
     print(f"\n⚙️ Triggering AI Pipeline for: {rera_url}")
     
-    try:
-        subprocess.run([sys.executable, str(PIPELINE), rera_url], check=True)
-        return jsonify({"status": "success", "message": "Pipeline finished!"})
-        
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Pipeline crashed: {e}")
-        return jsonify({"error": "Pipeline failed to execute"}), 500
+    def generate():
+        try:
+            # Popen allows us to non-blockingly check if process is done
+            process = subprocess.Popen([sys.executable, str(PIPELINE), rera_url])
+            
+            counter = 0
+            while process.poll() is None:
+                time.sleep(1)
+                counter += 1
+                if counter >= 10:
+                    # Yield enough blank spaces to force network buffers to flush
+                    # and keep the TCP connection alive under long AI runtimes
+                    yield b" " * 1024
+                    counter = 0
+                    
+            if process.returncode == 0:
+                yield b'{"status": "success", "message": "Pipeline finished!"}'
+            else:
+                yield b'{"status": "error", "message": "Pipeline failed to execute"}'
+        except Exception as e:
+            print(f"❌ Pipeline crashed: {e}")
+            yield b'{"status": "error", "message": "Exception occurred"}'
+
+    return Response(generate(), mimetype='application/json')
 
 # ==========================================
 # 3. REPORT ENDPOINT: Serve AI Analysis JSON
@@ -132,4 +150,4 @@ def health():
 if __name__ == '__main__':
     print("🚀 Live Hybrid Server running on http://localhost:5000")
     # 🚀 SUPER FIX: Added use_reloader=False to prevent double processing & crashes!
-    app.run(port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
