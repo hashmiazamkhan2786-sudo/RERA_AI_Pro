@@ -2,6 +2,7 @@
 import sys
 import json
 import subprocess
+import threading
 from pathlib import Path
 import requests
 import urllib3
@@ -83,6 +84,8 @@ def search():
 # ==========================================
 # 2. YOUR LOGIC: Run AI Pipeline on the URL
 # ==========================================
+pipeline_status = {"state": "idle", "error": None}
+
 @app.route('/run_pipeline', methods=['GET'])
 def run_pipeline():
     rera_url = request.args.get("url")
@@ -91,30 +94,28 @@ def run_pipeline():
 
     print(f"\n⚙️ Triggering AI Pipeline for: {rera_url}")
     
-    def generate():
-        try:
-            # Popen allows us to non-blockingly check if process is done
-            process = subprocess.Popen([sys.executable, str(PIPELINE), rera_url])
-            
-            counter = 0
-            while process.poll() is None:
-                time.sleep(1)
-                counter += 1
-                if counter >= 10:
-                    # Yield enough blank spaces to force network buffers to flush
-                    # and keep the TCP connection alive under long AI runtimes
-                    yield b" " * 1024
-                    counter = 0
-                    
-            if process.returncode == 0:
-                yield b'{"status": "success", "message": "Pipeline finished!"}'
-            else:
-                yield b'{"status": "error", "message": "Pipeline failed to execute"}'
-        except Exception as e:
-            print(f"❌ Pipeline crashed: {e}")
-            yield b'{"status": "error", "message": "Exception occurred"}'
+    global pipeline_status
+    pipeline_status["state"] = "processing"
+    pipeline_status["error"] = None
 
-    return Response(generate(), mimetype='application/json')
+    def background_task(url):
+        global pipeline_status
+        try:
+            subprocess.run([sys.executable, str(PIPELINE), url], check=True)
+            pipeline_status["state"] = "success"
+            print("✅ Background pipeline completed successfully!")
+        except subprocess.CalledProcessError as e:
+            pipeline_status["state"] = "error"
+            pipeline_status["error"] = str(e)
+            print(f"❌ Pipeline crashed: {e}")
+
+    threading.Thread(target=background_task, args=(rera_url,)).start()
+    return jsonify({"status": "processing", "message": "Pipeline started in background"})
+
+@app.route('/status', methods=['GET'])
+def check_status():
+    global pipeline_status
+    return jsonify(pipeline_status)
 
 # ==========================================
 # 3. REPORT ENDPOINT: Serve AI Analysis JSON
